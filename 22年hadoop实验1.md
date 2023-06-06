@@ -472,13 +472,13 @@ load data local inpath '/usr/local/software/hive-3.1.2/data/student1.txt' into t
 load data inpath '/usr/hive/data/class/student2.txt' into table student partition(year='2019-2020');
 ```
 
-覆盖上传数据到student表
+覆盖上传数据到student表
 ```hive
 load data local inpath '/usr/local/software/hive-3.1.2/data/student1.txt' overwrite into table student;
 ```
 
 插入数据(Insert)
-基本插入数据
+基本插入数据
 hive> insert into table student partition(year='2019-2020') values(11, 'zzz',10);
 根据单张表的查询结果插入数据
 hive> insert into table student partition(year='2018-2019') select id,name,age from student where year='2019-2020';
