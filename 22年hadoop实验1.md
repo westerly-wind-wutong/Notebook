@@ -1,4 +1,4 @@
-# 22年hadoop实验1
+# 22年hadoop实验
 
 ## 实验二：Hive创建表
 
@@ -289,6 +289,7 @@ quit;
 ## 实验五：数据定义操作DDL
 
 （一）启动Hive
+
 ```bash
 cd /root/
 hive
@@ -418,7 +419,7 @@ create database class;
 use class;
 ```
 
-数据准备
+（三）数据准备
 创建目录（如果存在即直接进入data目录）(需要打开另一个终端)
 
 ```bash
@@ -435,8 +436,8 @@ vim student1.txt
 将下述内容添加到文件中
 
 ```
-1       zhao    18
-2       jun     19
+1	zhao	18
+2	jun	19
 ```
 
 新建文件student2.txt
@@ -448,19 +449,29 @@ vim student2.txt
 将下述内容添加到文件中
 
 ```
-3       feng    17
-4       xiang   16
-5       bin     15
+3	feng	17
+4	xiang	16
+5	bin	15
 ```
 
 将student2.txt 上传到hdfs（需要启动hadoop集群）
 
 ```
-hadoop fs -mkdir -p /usr/hive/data/class	
+hadoop fs -mkdir -p /usr/hive/data/class
 hadoop fs -put /usr/local/software/hive-3.1.2/data/student2.txt /usr/hive/data/class
 ```
 
- 创建Hive表并导入数据集
+（四） 创建Hive表并导入数据集
+
+```hive
+create table if not exists student(
+id int,
+name string,
+age int
+)
+partitioned by (year string)
+row format delimited fields terminated by '\t';
+```
 
 加载本地文件到student表
 ```hive
@@ -477,46 +488,412 @@ load data inpath '/usr/hive/data/class/student2.txt' into table student partitio
 load data local inpath '/usr/local/software/hive-3.1.2/data/student1.txt' overwrite into table student;
 ```
 
-插入数据(Insert)
+（五）插入数据(Insert)
 基本插入数据
-hive> insert into table student partition(year='2019-2020') values(11, 'zzz',10);
-根据单张表的查询结果插入数据
-hive> insert into table student partition(year='2018-2019') select id,name,age from student where year='2019-2020';
-根据多张表的查询结果插入数据
-hive> insert into table student partition(year='2019-2020')
+
+```hive
+insert into table student partition(year='2019-2020') values(11, 'zzz',10);
+```
+
+根据单张表的查询结果插入数据
+```hive
+insert into table student partition(year='2018-2019') select id,name,age from student where year='2019-2020';
+```
+
+
+根据多张表的查询结果插入数据
+
+```hive
+insert into table student partition(year='2019-2020')
 select id,name,age from student where year='2017-2018'
 union
 select id,name,age from student where year='2018-2019';
-查看数据集：
-hive> select * from student;
+```
 
-查询数据(Select)
+查看数据集：
+```hive
+select * from student;
+```
+
+（六）查询数据(Select)
 查询语句中创建表并加载数据（As Select）（查询的结果会添加到新创建的表中）
-hive> create table if not exists student1 as select id,name,age from student where year in ('2017-2018','2018-2019','2019-2020','2020-2021');
-hive> select * from student1;
 
-数据导出
-将查询结果导出到本地
-hive> insert overwrite local directory '/usr/local/software/hive-3.1.2/data/student1' select * from student;
+```hive
+create table if not exists student1 as select id,name,age from student where year in ('2017-2018','2018-2019','2019-2020','2020-2021');
+select * from student1;
+```
 
-查看数据内容：在另一个终端查看
+（七）数据导出
+将查询结果导出到本地
+
+
+```hive
+insert overwrite local directory '/usr/local/software/hive-3.1.2/data/student1' select * from student;
+```
+
+查看数据内容：在另一个终端查看
+
+```bash
  cd /usr/local/software/hive-3.1.2/data/student1
  cat 000000_0
+```
 
-将查询结果格式化导出到本地
-hive> insert overwrite local directory '/usr/local/software/hive-3.1.2/data/student2' row format delimited fields terminated by '\t' select * from student;
-查看数据内容：在另一个终端查看
+将查询结果格式化导出到本地
+```hive
+insert overwrite local directory '/usr/local/software/hive-3.1.2/data/student2' row format delimited fields terminated by '\t' select * from student;
+```
+
+查看数据内容：在另一个终端查看
+
+```bash
 cd /usr/local/software/hive-3.1.2/data/student2
 cat 000000_0
+```
 
 将查询结果格式化导出到HDFS
-hive> insert overwrite directory '/output/hive/student1' row format delimited fields terminated by '\t' select * from student;
+```hive
+insert overwrite directory '/output/hive/student1' row format delimited fields terminated by '\t' select * from student;
+```
+
 查看数据内容：在另一个终端查看
+
+```bash
 hadoop fs -ls /output/hive/student1
 hadoop fs -cat /output/hive/student1/*
+```
 
-清空数据（Truncate）删除表(Drop)
-仅删除student表中数据，保留表结构
-hive> truncate table student;
-删除表student1
-hive> drop table if exists student1;
+（八）清空数据（Truncate）删除表(Drop)
+仅删除student表中数据，保留表结构
+
+```hive
+truncate table student;
+```
+
+
+删除表student1
+```hive
+drop table if exists student1;
+```
+
+##  实验七 ：Hive SQL查询操作
+
+（一）启动Hive
+
+```bash
+cd /root/
+hive
+```
+
+数据库准备
+
+创建数据库test2（若数据库已存在则不操作）
+
+```hive
+create database test2;
+```
+
+选择数据库test2
+
+```hive
+use test2;
+```
+
+（三）数据准备
+
+```bash
+mkdir /usr/local/software/hive-3.1.2/data
+cd /usr/local/software/hive-3.1.2/data
+```
+
+新建文件emp.txt（如果存在就不需要创建）
+
+```bash
+vim emp.txt
+```
+
+将下述内容添加到文件中
+
+```
+7369,SMITH,CLERK,7902,1980-12-17,800.00,,20
+7499,ALLEN,SALESMAN,7698,1981-2-20,1600.00,300.00,30
+7521,WARD,SALESMAN,7698,1981-2-22,1250.00,500.00,30
+7566,JONES,MANAGER,7839,1981-4-2,2975.00,,20
+7654,MARTIN,SALESMAN,7698,1981-9-28,1250.00,1400.00,30
+7698,BLAKE,MANAGER,7839,1981-5-1,2850.00,,30
+7782,CLARK,MANAGER,7839,1981-6-9,2450.00,,10
+7788,SCOTT,ANALYST,7566,1987-4-19,3000.00,,20
+7839,KING,PRESIDENT,7567,1981-11-17,5000.00,,10
+7844,TURNER,SALESMAN,7698,1981-9-28,1500.00,0.00,30
+7876,ADAMS,CLERK,7788,1987-5-23,1100.00,,20
+7900,JAMES,CLERK,7698,1981-12-3,950.00,,30
+7902,FORD,ANALYST,7566,1981-12-3,3000.00,,20
+7934,MILLER,CLERK,7782,1982-1-23,1300.00,,10
+8888,HIVE,PROGRAM,7839,1988-1-23,10300.00,,40
+```
+
+新建文件dept.txt
+
+```bash
+vim dept.txt
+```
+
+
+将下述内容添加到文件中
+
+```
+10,ACCOUNTING,NEW YORK
+20,RESEARCH,DALLAS
+30,SALES,CHICAGO
+40,OPERATIONS,BOSTON
+```
+
+创建Hive表并导入数据集
+
+
+部门表相关操作:创建员工表emp
+
+```hive
+create table emp(
+empno int,
+ename string,
+job string,
+mgr int,
+hiredate string,
+sal double,
+comm double,
+deptno int
+)
+row format delimited fields terminated by ',';
+```
+
+导入数据
+
+```hive
+load data local inpath '/usr/local/software/hive-3.1.2/data/emp.txt' overwrite into table emp;
+```
+
+查看数据集
+
+```hive
+select * from test2.emp;
+```
+
+部门表相关操作:创建部门表dept
+
+
+```hive
+create table dept(
+deptno int,
+dname string,
+loc string
+)
+row format delimited fields terminated by ',';
+```
+
+导入数据
+
+```hive
+load data local inpath '/usr/local/software/hive-3.1.2/data/dept.txt' overwrite into table dept;
+```
+
+查看数据集
+
+```hive
+select *from test2.dept;
+```
+
+查询操作练习
+查询员工表前5条记录
+
+
+```hive
+select *from emp limit 5;
+```
+
+查询姓名为SCOTT或MARTIN的员工
+
+```hive
+select * from emp where ename in ('SCOTT','MARTIN');
+```
+
+查询有津贴的员工
+
+```hive
+select * from emp where comm is not null;
+```
+
+统计部门30以下共有多少员工
+
+```hive
+select count(*) from emp where deptno =30;
+```
+
+查询员工的最大、最小、平均工资及所有工资的和
+
+```hive
+select max(sal),min(sal),avg(sal),sum(sal)from emp;
+```
+
+查询每个部门的平均工资
+
+```hive
+select avg(sal),deptno from emp group by deptno;
+```
+
+## 综合实验一 统计用户的访问次数
+
+（一）启动Hive
+
+```bash
+cd /root/
+hive
+```
+
+（二）数据库准备
+
+创建数据库test2（若数据库已存在则不操作）
+
+```hive
+create database test2;
+```
+
+选择数据库test2
+
+```hive
+use test2;
+```
+
+（三）数据准备与实验需求说明
+创建目录（如果存在即直接进入data目录）（需要使用打开另一个终端）
+
+```bash
+mkdir /usr/local/software/hive-3.1.2/data
+cd /usr/local/software/hive-3.1.2/data
+```
+
+新建文件visit.txt
+
+```bash
+vim visit.txt
+```
+
+将下述内容添加到文件中
+
+```
+A,2015-01,5
+A,2015-01,15
+B,2015-01,5
+A,2015-01,8
+B,2015-01,25
+A,2015-01,5
+A,2015-02,4
+A,2015-02,6
+B,2015-02,10
+B,2015-02,5
+A,2015-03,16
+A,2015-03,22
+B,2015-03,23
+B,2015-03,10
+B,2015-03,1
+```
+
+数据格式说明：用户名，月份，访问次数
+实验需求：求单月访问次数和总访问次数
+
+（四）创建Hive表并导入数据集
+创建用户日志表visit:
+```hive
+create table visit(
+name varchar(20),
+mon varchar(20),
+num int
+)
+row format delimited fields terminated by ',';
+```
+
+插入数据：
+
+```hive
+insert into visit values('A','2018-01',5);
+insert into visit values('A','2018-01',15);
+insert into visit values('B','2018-01',5);
+insert into visit values('A','2018-01',8);
+insert into visit values('B','2018-01',25);
+insert into visit values('A','2018-01',5);
+insert into visit values('A','2018-02',4);
+insert into visit values('A','2018-02',6);
+insert into visit values('B','2018-02',10);
+insert into visit values('B','2018-02',5);
+insert into visit values('A','2018-03',16);
+insert into visit values('A','2018-03',22);
+insert into visit values('B','2018-03',23);
+insert into visit values('B','2018-03',10);
+insert into visit values('B','2018-03',1);
+```
+
+也可以使用以下命令导入数据：
+
+```hive
+load data local inpath '/usr/local/software/hive-3.1.2/data/visit.txt' overwrite into table visit;
+```
+
+查看数据集
+```hive
+select * from test2.visit;
+```
+
+（五）求单月访问次数
+创建临时表存放当月访问次数
+```hive
+create table visit_mon as
+select t.name, t.mon, sum(t.num) mon_sum
+from visit t
+where 1=2
+group by t.name,t.mon;
+```
+
+插入数据
+```hive
+insert into visit_mon
+select t.name, t.mon, sum(t.num)
+from visit t
+where 1=1
+group by t.name,t.mon
+order by 1,2;
+```
+
+查询单月访问次数
+```hive
+select * from visit_mon;
+```
+
+（六）求总访问次数
+创建临时表存放当月访问次数（做一个视图，把和表a相同的表b和表a内关联。）
+
+```hive
+create table visit_mon_view as
+select a.name as aname, a.mon as amon, a.mon_sum as amon_sum, b.name, b.mon as bmon, b.mon_sum as bmon_sum
+from visit_mon a
+join visit_mon b
+on a.name = b.name
+where 1=2;
+```
+
+
+插入数据
+
+```hive
+insert into visit_mon_view
+select a.name as aname, a.mon as amon, a.mon_sum as amon_sum, b.name, b.mon as bmon, b.mon_sum as bmon_sum
+from visit_mon a
+join visit_mon b
+on a.name = b.name
+where 1=1;
+```
+
+
+查询总访问次数
+```hive
+select * from visit_mon_view;
+```
+
