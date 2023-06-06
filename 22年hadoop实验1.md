@@ -1,5 +1,103 @@
 # 22年hadoop实验
 
+## 实验一：Hive安装与配置
+
+（一）Hive安装
+进入install_pack目录查看Hive压缩包
+
+```bash
+cd /usr/local/install_pack/
+ls -lrt
+```
+
+解压Hive文件
+
+```bash
+tar -zxvf apache-hive-3.1.2-bin.tar.gz -C /usr/local/software/
+```
+
+进程software目录查看解压好的文件
+
+```bash
+cd /usr/local/software
+ls -l
+```
+
+修改目录名称
+
+```bash
+mv apache-hive-3.1.2-bin/ hive-3.1.2
+```
+
+配置环境变量
+
+```bash
+vim /etc/profile
+```
+
+将下列文本追加到文件中
+
+```bash
+# 配置HIVE_HOME
+export HIVE_HOME=/usr/local/software/hive-3.1.2
+export PATH=$PATH:$HIVE_HOME/bin
+```
+
+设置hive配置文件（hive-env.sh），并在文件末尾添加上HADOOP的安装路径
+
+```bash
+cd /usr/local/software/hive-3.1.2/conf
+cp hive-env.sh.template hive-env.sh
+vim hive-env.sh
+```
+
+将下述文本追加至文件末尾
+```
+HADOOP_HOME=/usr/local/software/hadoop-3.2.1
+```
+创建HDFS存储Hive元数据的文件目录，并赋予权限
+
+```bash
+start-all.sh
+hadoop fs -mkdir /tmp
+hadoop fs -mkdir -p /usr/hive/warehouse
+hadoop fs -chmod g+w /tmp
+hadoop fs -chmod g+w /usr/hive/warehouse
+```
+
+替换冲突的包
+
+```bash
+cd /usr/local/software/hive-3.1.2/lib
+mv guava-19.0.jar guava-19.0.jar.bak
+cp /usr/local/software/hadoop-3.2.1/share/hadoop/common/lib/guava-27.0-jre.jar /usr/local/software/hive-3.1.2/lib/
+```
+
+初始化derby数据库
+
+```bash
+cd /root/
+schematool -initSchema -dbType derby
+```
+
+启动Hive
+
+```bash
+hive
+```
+
+查看表
+
+```hive
+show tables;
+```
+
+退出
+
+```hive
+quit;
+```
+
 ## 实验二：Hive创建表
 
 五、实验步骤：
@@ -895,5 +993,122 @@ where 1=1;
 查询总访问次数
 ```hive
 select * from visit_mon_view;
+```
+
+## 综合实验二 窗口分析函数实现
+
+（一）启动Hive
+
+```bash
+cd /root/
+hive
+```
+
+（二）数据库准备
+创建数据库cookie（若数据库已存在则不操作）
+
+```hive
+create database cookie;
+```
+
+选择数据库cookie
+
+```hive
+use cookie;
+```
+
+（三）窗口分析函数之聚合函数实例
+
+数据准备创建目录（如果存在即直接进入data目录）（需要在另一终端进行）
+
+```bash
+mkdir /usr/local/software/hive-3.1.2/data
+cd /usr/local/software/hive-3.1.2/data
+```
+
+新建文件cookie2.txt
+
+```bash
+vim cookie2.txt
+```
+
+将下述内容添加到文件中
+
+```
+cookie1,2015-04-10,1
+cookie1,2015-04-11,5
+cookie1,2015-04-12,7
+cookie1,2015-04-13,3
+cookie1,2015-04-14,2
+cookie1,2015-04-15,4
+cookie1,2015-04-16,4
+cookie2,2015-04-10,2
+cookie2,2015-04-11,3
+cookie2,2015-04-12,5
+cookie2,2015-04-13,6
+cookie2,2015-04-14,3
+cookie2,2015-04-15,9
+cookie2,2015-04-16,7
+```
+
+数据格式说明：用户cookieID，创建日期，点击数量
+创建Hive表并导入数据集 ：创建cookie2表:
+
+```hive
+drop table if exists cookie2;
+```
+
+```hive
+create table cookie2(
+cookieid string, 
+createtime string, 
+pv int
+)
+row format delimited fields terminated by ',';
+```
+
+导入数据：
+```hive
+load data local inpath '/usr/local/software/hive-3.1.2/data/cookie2.txt' overwrite into table cookie2;
+```
+
+查看数据集
+```hive
+select * from cookie.cookie2;
+```
+
+查询语句：
+```hive
+select cookieid,createtime,pv,
+ntile(2) over (partition by cookieid order by createtime) as rn1, --分组内将数据分成2片
+ntile(3) over (partition by cookieid order by createtime) as rn2, --分组内将数据分成2片
+ntile(4) over (order by createtime) as rn3 --将所有数据分成4片
+from cookie.cookie2 
+order by cookieid,createtime;
+```
+
+统计一个cookie，pv数最多的前1/3的天
+```hive
+select cookieid,createtime,pv,
+ntile(3) over (partition by cookieid order by pv desc ) as rn 
+from cookie.cookie2;
+```
+
+分组排序查询语句：
+```hive
+select cookieid,createtime,pv,
+row_number() over (partition by cookieid order by pv desc) as rn
+from cookie.cookie2;
+```
+
+查询语句：
+
+```hive
+select cookieid,createtime,pv,
+rank() over (partition by cookieid order by pv desc) as rn1,
+dense_rank() over (partition by cookieid order by pv desc) as rn2,
+row_number() over (partition by cookieid order by pv desc) as rn3
+from cookie.cookie2 
+where cookieid='cookie1';
 ```
 
