@@ -159,4 +159,50 @@ chmod 744 kf
 启动：```kf start```
 关闭：```kf stop```
 
-## 实验二
+## 实验二：发布订阅消息系统
+
+（一）环境检测
+
+启动zookeeper与kafka
+
+```bash
+zk start
+kf start
+xcall jps
+```
+
+（二）Topic操作
+
+创建Topic（名为my_repl5_topic，5个分区，复制因子为3）
+
+```bash
+kafka-topics.sh --zookeeper master:2181,slave1:2181,slave2:2181 --create --topic my_repl5_topic --replication-factor 3 --partitions 5
+```
+
+查看创建的Topic描述
+
+```bash
+kafka-topics.sh --zookeeper master:2181,slave1:2181,slave2:2181 --describe --topic my_repl5_topic
+```
+
+（三）启动生产者Producer
+在**master**节点启动Producer（处于等待状态）：
+
+```bash
+kafka-console-producer.sh --broker-list master:9092,slave1:9092,slave2:9092 --topic my_repl5_topic
+```
+
+启动消费者Consumer
+在**slave1**节点启动Consumer（处于等待状态）：
+
+```bash
+kafka-console-consumer.sh --bootstrap-server master:9092,slave1:9092,slave2:9092 --topic my_repl5_topic --from-beginning
+```
+
+演示发布订阅消息系统
+切换到**master**终端，输入下列内容
+hello
+hadoop
+kafka
+
+切换到slave1终端，查看消费者消费内容
