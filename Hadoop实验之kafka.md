@@ -18,7 +18,7 @@ cd /usr/local/install_pack/
 tar -zxvf kafka_2.12-2.4.0.tgz -C /usr/local/software/
 ```
 
-配置Kafka
+（二）配置Kafka
 修改Kafka的配置文件 server.properties
 
 ```bash
@@ -92,7 +92,7 @@ export PATH=$PATH:$KAFKA_HOME/bin
 source /etc/profile
 ```
 
-启动KAFKA
+（十一）启动KAFKA
 启动Zookeeper：
 
 ```bash
