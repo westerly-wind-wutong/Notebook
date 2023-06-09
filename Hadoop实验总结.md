@@ -272,3 +272,102 @@ insert overwrite local directory '/usr/local/software/hive-3.1.2/data/emp_1' row
 (1)必须包含hive启动成功截图
 (2)必须包含题目要求的两条查询语句
 (3)导出到本地文件夹内的相关数据集截图
+
+### 综合实验一 统计用户的访问次数
+
+实验总结
+在5.6操作练习的基础下，请完成以下任务
+1、查询A用户单月访问次数和总访问次数
+2、查询A用户1月访问次数和总访问次数
+请按以下格式输出实验报告：
+HiveQL案例:HiveQL统计用户访问次数练习
+姓名：
+学号：
+实验步骤：
+
+1. 启动 hive
+
+```bash
+start-all.sh
+zk start
+hive
+```
+
+![image-20230609093509238](./assets/image-20230609093509238.png)
+
+2. 查询A用户单月访问次数和总访问次数
+
+```hive
+# A用户单月访问次数
+select mon,sum(num)
+from visit
+where name="A"
+group by mon;
+
+# A用户总访问次数
+select sum(num)
+from visit
+where name="A";
+```
+
+3. 查询A用户1月访问次数和总访问次数
+
+```hive
+# A用户1月访问次数
+select sum(num)
+from visit
+where name="A" and mon="2018-01";
+
+# A用户总访问次数
+select sum(num)
+from visit
+where name="A";
+```
+
+
+
+注意事项:
+(1)必须包含hive启动成功截图
+(2)必须包含题目要求的两条查询语句
+
+### 综合实验二 窗口分析函数实现
+
+实验总结
+在5.3操作练习的基础下，请完成以下任务？
+1、使用MAX语句查询pv,pv1,pv2,pv3,pv4,pv5,pv6的结果
+请按以下格式输出实验报告：
+HiveQL案例:HiveQL窗口分析函数练习
+姓名：
+学号：
+实验步骤：
+
+1. 启动 hive
+
+```bash
+start-all.sh
+zk start
+hive
+```
+
+![image-20230609093509238](./assets/image-20230609093509238.png)
+
+2. 使用MAX语句查询pv,pv1,pv2,pv3,pv4,pv5,pv6的结果
+
+```hive
+select cookieid,createtime,pv,
+max(pv) over(partition by cookieid)as pv,
+max(pv) over(partition by cookieid)as pv1,
+max(pv) over(partition by cookieid)as pv2,
+max(pv) over(partition by cookieid)as pv3,
+max(pv) over(partition by cookieid)as pv4,
+max(pv) over(partition by cookieid)as pv5,
+max(pv) over(partition by cookieid)as pv6
+from cookie2;
+```
+
+![image-20230609171101791](./assets/image-20230609171101791.png)
+
+注意事项
+(1)必须包含hive启动成功截图
+(2)必须包含题目要求的查询语句
+必须包含正确的查询结果截图
