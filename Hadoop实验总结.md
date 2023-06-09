@@ -1,6 +1,6 @@
 ### 实验四：Hive数据类型
 
-六、实验总结
+实验总结
 
 独立完成以下任务？
 有以下数据集partitions.txt:
@@ -58,7 +58,7 @@ select * from partitions;
 
 ### 实验五：数据定义操作DDL
 
-六、实验总结
+实验总结
 独立完成以下任务
 有学生(学号，姓名，性别，年龄)数据集如下，请完成以下任务：
 101,孙悟空,男,100
@@ -136,7 +136,7 @@ drop table student1 cascade;
 
 ### 实验六：数据操作DML
 
-六、实验总结
+实验总结
 独立完成以下任务
 有学生(学号，姓名，性别，年龄)数据集如下，请完成以下任务：
 101,孙悟空,男,100
@@ -210,3 +210,65 @@ insert overwrite local directory '/usr/local/software/hive-3.1.2/data/student4' 
 (7)必须包含hive创建student3与student4数据表的语句
 (8)必须包含查询student4表数据的截图
 (9)必须包含hive导出student4表的语句
+
+### 实验七：Hive SQL查询操作
+
+实验总结
+在5.5查询操作练习的基础下，请完成以下任务
+1、查询平均工资大于2000的部门
+2、查询员工的姓名和工资等级，按如下规则显示
+sal小于等于1000，显示lower
+sal大于1000且小于等于2000，显示middle 
+sal大于2000小于等于4000，显示high 
+sal大于4000，显示highest:
+3、请将查询出的每个部门的平均工资数据集文件导出到本地文件夹
+请按以下格式输出实验报告：
+HiveQL应用:HiveQL查询操作练习
+姓名：
+学号：
+实验步骤：
+
+1. 启动 hive
+
+```bash
+start-all.sh
+zk start
+hive
+```
+
+![image-20230609093509238](./assets/image-20230609093509238.png)
+
+2. 查询平均工资大于2000的部门
+
+```hive
+use test2;
+select avg(sal),deptno from emp group by deptno having avg(sal)>2000;
+```
+
+3. 查询员工的姓名和工资等级
+
+```hive
+select ename,
+case
+when sal <= 1000 then 'lower'
+when sal > 1000 and sal <= 2000 then 'middle'
+when sal > 2000 and sal <= 4000 then 'high'
+when sal > 4000 then 'highest'
+end
+from emp;
+```
+
+4. 将查询出的每个部门的平均工资数据集文件导出到本地文件夹
+
+```hive
+create table emp_1 as select avg(sal),deptno from emp group by deptno;
+
+insert overwrite local directory '/usr/local/software/hive-3.1.2/data/emp_1' row format delimited fields terminated by '\t' select * from emp_1;
+```
+
+![image-20230609112948267](./assets/image-20230609112948267.png)
+
+注意事项:
+(1)必须包含hive启动成功截图
+(2)必须包含题目要求的两条查询语句
+(3)导出到本地文件夹内的相关数据集截图
