@@ -1,4 +1,4 @@
-# 22年hadoop实验
+# Hadoop实验之Hive
 
 ## 实验一：Hive安装与配置
 
